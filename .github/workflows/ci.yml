@@ -60,7 +60,7 @@ jobs:
       - name: Run k6 baseline
         uses: grafana/k6-action@v0.3.0
         with:
-          script: perf/k6/baseline.js
+          filename: perf/k6/baseline.js
 
   security:
     runs-on: ubuntu-latest
