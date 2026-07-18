@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/fixtures';
 import { config } from '@config/config';
 
 test.describe('TripStack resilience', () => {
-  test('a fault state resilience payment connection reset', async ({ page, loginPage, homePage, checkoutPage }) => {
+  test('@resilience a fault state resilience payment connection reset', async ({ page, loginPage, homePage, checkoutPage }) => {
     await page.route('**/payment/**', route => {
       route.abort('connectionreset');
     });
