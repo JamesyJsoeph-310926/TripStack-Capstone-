@@ -20,7 +20,7 @@ jobs:
         run: npm ci
         working-directory: ui-tests
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium --with-deps
         working-directory: ui-tests
       - name: Run UI suite
         run: npx playwright test --grep "@${{ matrix.suite }}"
