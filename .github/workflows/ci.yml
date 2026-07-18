@@ -1,0 +1,77 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        suite: [journey, negative, resilience]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: ui-tests
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: ui-tests
+      - name: Run UI suite
+        run: npx playwright test --grep "@${{ matrix.suite }}"
+        working-directory: ui-tests
+      - name: Upload UI artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-artifacts-${{ matrix.suite }}
+          path: |
+            ui-tests/test-results
+            ui-tests/artifacts
+            ui-tests/allure-results
+
+  api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run API, DB, security, and resilience tests
+        run: mvn test -Dgroups=journey,negative,resilience,db
+        working-directory: api-tests
+      - name: Upload API artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-artifacts
+          path: |
+            api-tests/target/surefire-reports
+            api-tests/target/allure-results
+
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        run: sudo apt-get update && sudo apt-get install -y k6
+      - name: Run k6 performance baseline
+        run: k6 run perf/k6/bus-search.js --summary-export=perf/k6/results/summary.json
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: perf/k6/results
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [ui-tests, api-tests, performance]
+    steps:
+      - run: echo 'Quality gate passed'
